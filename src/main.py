@@ -46,16 +46,6 @@ class TimeLine():
         self.timelist = []
     def get_time(self):
         self.timelist.append(datetime.datetime.now())
-    def time_calc(self):
-        self.work_end_hour = self.timelist[-1].hour
-        self.work_end_minute = self.timelist[-1].minute
-        self.work_time_sum = datetime.timedelta()
-        for i in range(1,len(self.timelist),2):
-            self.work_time_sum += (self.timelist[i] - self.timelist[i-1])
-
-        self.work_time_sum_hour = self.work_time_sum // datetime.timedelta(hours=1)
-        self.work_time_sum_minute = self.work_time_sum.seconds % datetime.timedelta(hours=1).seconds // 60
-        self.timelist.clear()
 
 class ButonElement():
     def __init__(self, text, b_id:BUTTON_NUM, frame,state=tk.NORMAL):
@@ -76,15 +66,13 @@ def do_action(obj:ButonElement):
     #msg = CONFIRM_MSG_TBL[obj.action.value]
     #ret = messagebox.askyesno("確認",msg)
     if ret == TRUE:
-        vpn_control(obj)
         gyomu.get_time()
         update_button(obj)
         if obj.action == ACTION_VAR.KINMU_END:
             act_kinmu_end(obj)
         elif obj.action == ACTION_VAR.KINMU_START:
-            gyomu.work_start_hour = gyomu.timelist[0].hour
-            gyomu.work_start_minute = gyomu.timelist[0].minute
             print("a")
+        vpn_control(obj)
 
         global state_var
         state_var = obj.new_state
@@ -94,7 +82,7 @@ def error(num):
     exit(False)
 
 def act_kinmu_end(obj):
-    gyomu.time_calc()
+    kics_register.KICS_acess(gyomu.timelist)
     print("kinmu shuryo sequence")
 
 def vpn_control(obj:ButonElement):
