@@ -17,8 +17,8 @@ class KINMU_JOHO():
 
     def time_calc(self, timelist):
         work_time_sum = datetime.timedelta()
-        for i in range(1,len(timelist),2):
-            work_time_sum += (timelist[i] - timelist[i-1])
+        for i in range(0,len(timelist),2):
+            work_time_sum += (timelist[i+1] - timelist[i])
         work_time_sum_hour = work_time_sum // datetime.timedelta(hours=1)
         work_time_sum_minute = work_time_sum.seconds % datetime.timedelta(hours=1).seconds // 60
 
@@ -95,7 +95,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#js = 'return document'
-#
-#driver.execute_script(js)

@@ -8,6 +8,7 @@ from   tkinter.constants import DISABLED, FALSE, TRUE
 import importlib
 
 import kics_register
+import vpn_control
 
 class STATE_VAR(Enum):
     KINMU_MAE=0
@@ -62,19 +63,23 @@ class ButonElement():
 
 def do_action(obj:ButonElement):
     #print("confirm")
-    ret = TRUE
-    #msg = CONFIRM_MSG_TBL[obj.action.value]
-    #ret = messagebox.askyesno("確認",msg)
+    #ret = TRUE
+    msg = CONFIRM_MSG_TBL[obj.action.value]
+    ret = messagebox.askyesno("確認",msg)
     if ret == TRUE:
+        global state_var
         gyomu.get_time()
         update_button(obj)
         if obj.action == ACTION_VAR.KINMU_END:
             act_kinmu_end(obj)
         elif obj.action == ACTION_VAR.KINMU_START:
             print("a")
-        vpn_control(obj)
 
-        global state_var
+        if state_var==STATE_VAR.KINMU_CHU :
+            vpn_control.vpn_control("disconnect")
+        else :
+            vpn_control.vpn_control("connect")
+
         state_var = obj.new_state
 
 def error(num):
@@ -82,14 +87,9 @@ def error(num):
     exit(False)
 
 def act_kinmu_end(obj):
-    kics_register.KICS_acess(gyomu.timelist)
-    print("kinmu shuryo sequence")
-
-def vpn_control(obj:ButonElement):
-    if state_var==STATE_VAR.KINMU_CHU:
-        print("VPN disconnet")
-    else :
-        print("VPN connect")
+    err = kics_register.KICS_acess(gyomu.timelist)
+    if err == False:
+        error('kics_err')
 
 def update_button(obj:ButonElement):
     global b1,b2
