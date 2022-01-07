@@ -19,7 +19,7 @@ class KINMU_JOHO():
     def time_calc(self, timelist):
         work_time_sum = datetime.timedelta()
         for i in range(0, len(timelist), 2):
-            work_time_sum += (timelist[i+1] - timelist[i])
+            work_time_sum += (timelist[i + 1] - timelist[i])
         work_time_sum_hour = work_time_sum // datetime.timedelta(hours=1)
         work_time_sum_minute = work_time_sum.seconds % datetime.timedelta(
             hours=1).seconds // 60
@@ -54,8 +54,8 @@ def KICS_acess(timelist, user, password):
         kics_url = 'http://kics.jinji.denso.co.jp/siteminderagent/forms_ja-JP/login-kics.fcc?TYPE=33554433&REALMOID=06-0007e4b9-ceba-18d0-b029-0e0e0a06b0a4&GUID=&SMAUTHREASON=0&METHOD=GET&SMAGENTNAME=-SM-HRqQr6ufcyxhIF0WsEzBihlJmLjJf14Q%2fr%2f7bkyx2DuLbqMW%2bF2WWjM%2fvtW%2bhiy1&TARGET=-SM-http%3a%2f%2fkics%2ejinji%2edenso%2eco%2ejp%2fa0tpkkics%2fapl%2fjsp%2fTop%2ejsp'
         driver.get(kics_url)
 
-        js = 'document.Login.USER.value=\"'+kics_info.USER+'\"; \
-              document.Login.PASSWORD.value=\"'+kics_info.PASSWORD+'\"; \
+        js = 'document.Login.USER.value=\"' + kics_info.USER + '\"; \
+              document.Login.PASSWORD.value=\"' + kics_info.PASSWORD + '\"; \
               submitForm();'
 
         driver.execute_script(js)
@@ -64,12 +64,12 @@ def KICS_acess(timelist, user, password):
         handle_array = driver.window_handles
         driver.switch_to.window(handle_array[-1])
 
-        js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "'+kics_info.S_hour+'"; \
-               appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "'+kics_info.S_min+'" ; \
-               appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "'+kics_info.E_hour+'"; \
-               appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "'+kics_info.E_min+'" ; \
-               appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "'+kics_info.G_hour+'"; \
-               appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "'+kics_info.G_min+'" ;'
+        js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "' + kics_info.S_hour + '"; \
+               appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "' + kics_info.S_min + '" ; \
+               appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "' + kics_info.E_hour + '"; \
+               appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "' + kics_info.E_min + '" ; \
+               appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "' + kics_info.G_hour + '"; \
+               appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "' + kics_info.G_min + '" ;'
         driver.execute_script(js)
 
         driver.execute_script('appFrame.ok_onClick();')

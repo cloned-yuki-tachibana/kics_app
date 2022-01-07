@@ -28,27 +28,49 @@ class ACTION_VAR(Enum):
     ACTION_TOAL = 4  # dummy
 
 
-class EVENT_VAR(Enum):
-    KINMU_BUTTON_PUSHED = 0
-    KYUKEI_BUTTON_PUSHED = 1
-    EVENT_TOTAL = 2  # dummy
-
-
 class BUTTON_ID(Enum):
-    KINMU_BUTTON = 0
-    KYUKEI_BUTTON = 1
-    BUTTON_TOTAL = 2  # dummy
+    KINMU_START_BUTTON = 0
+    KINMU_END_BUTTON = 1
+    KYUKEI_START_BUTTON = 2
+    KYUKEI_END_BUTTON = 3
+    BUTTON_TOTAL = 4  # dummy
 
-    # state
-    # kinumae              kinmu chu                 kyukei chu
-NEXT_STATE_TBL = [[STATE_VAR.KINMU_CHU,      STATE_VAR.KINMU_MAE,     STATE_VAR.KINMU_CHU],      # event 0
-                  [STATE_VAR.STATE_TOTAL,    STATE_VAR.KYUKEI_CHU,    STATE_VAR.STATE_TOTAL]]   # event 1
 
-ACTION_TBL = [[ACTION_VAR.KINMU_START,   ACTION_VAR.KINMU_END,    ACTION_VAR.KINMU_RESTART],  # event 0
-              [ACTION_VAR.ACTION_TOAL,   ACTION_VAR.KYUKEI_START, ACTION_VAR.ACTION_TOAL]]   # event 1
+class EVENT_VAR(Enum):
+    KINMU_START_BUTTON_PUSHED = 0
+    KINMU_END_BUTTON_PUSHED = 1
+    KYUKEI_START_BUTTON_PUSHED = 2
+    KYUKEI_END_BUTTON_PUSHED = 3
+    EVENT_TOTAL = 4  # dummy
 
-BUTTON_TBL = [[("勤務開始", tk.NORMAL),   ("勤務終了", tk.NORMAL), ("勤務再開", tk.NORMAL)],   # button id 0
-              [("休憩開始", tk.DISABLED), ("休憩開始", tk.NORMAL), ("休憩開始", tk.DISABLED)]]  # button id 1
+
+NEXT_STATE_TBL = (
+    (STATE_VAR.KINMU_CHU,
+     STATE_VAR.STATE_TOTAL,
+     STATE_VAR.STATE_TOTAL),
+    (STATE_VAR.STATE_TOTAL,
+     STATE_VAR.KINMU_MAE,
+     STATE_VAR.STATE_TOTAL),
+    (STATE_VAR.STATE_TOTAL,
+     STATE_VAR.KYUKEI_CHU,
+     STATE_VAR.STATE_TOTAL),
+    (STATE_VAR.STATE_TOTAL,
+     STATE_VAR.STATE_TOTAL,
+     STATE_VAR.KINMU_CHU))
+
+ACTION_TBL = (
+    (ACTION_VAR.KINMU_START,
+     ACTION_VAR.ACTION_TOAL,
+     ACTION_VAR.ACTION_TOAL),
+    (ACTION_VAR.ACTION_TOAL,
+     ACTION_VAR.KINMU_END,
+     ACTION_VAR.ACTION_TOAL),
+    (ACTION_VAR.ACTION_TOAL,
+     ACTION_VAR.KYUKEI_START,
+     ACTION_VAR.ACTION_TOAL),
+    (ACTION_VAR.ACTION_TOAL,
+     ACTION_VAR.ACTION_TOAL,
+     ACTION_VAR.KINMU_RESTART))
 
 CONFIRM_MSG_TBL = ["在宅勤務を開始します。よろしいですか",
                    "在宅勤務を終了します。よろしいですか",
@@ -65,9 +87,9 @@ class EventManage():
         EventManage.new_state = NEXT_STATE_TBL[event_id.value][EventManage.state_var.value]
         EventManage.action = ACTION_TBL[event_id.value][EventManage.state_var.value]
         # print("confirm")
-        #ret = TRUE
-        msg = CONFIRM_MSG_TBL[EventManage.action.value]
-        ret = messagebox.askyesno("確認", msg)
+        ret = TRUE
+        # msg = CONFIRM_MSG_TBL[EventManage.action.value]
+        # ret = messagebox.askyesno("確認", msg)
         if ret == TRUE:
             # ここで直接gyomuを参照してるのが微妙
             gyomu.get_time()
@@ -86,18 +108,36 @@ class EventManage():
 
 
 class ButtonElement(EventManage):
-    def __init__(self, frame, text, event_id: EVENT_VAR, button_id: BUTTON_ID, state=tk.NORMAL):
+    def __init__(
+            self,
+            frame,
+            text,
+            event_id: EVENT_VAR,
+            button_id: BUTTON_ID,
+            state=tk.NORMAL):
         self.text = tk.StringVar(frame)
         self.text.set(text)
         self.event_id = event_id
         self.button_id = button_id
         self.font = ("MSゴシック", "20", "bold")
         self.b_element = tk.Button(
-            master=frame, textvariable=self.text, font=self.font, command=self.click, state=state)
+            master=frame,
+            textvariable=self.text,
+            font=self.font,
+            command=self.click,
+            state=state)
 
     def click(self):
         super().do_action(self.event_id)
         update_button()
+
+    def activate(self):
+        self.b_element.config(state=tk.NORMAL, background="palegreen",
+                              activebackground="limegreen", relief=tk.RAISED)
+
+    def inactivate(self):
+        self.b_element.config(
+            state=tk.DISABLED, background="gray", relief=tk.GROOVE)
 
 
 class InputForm():
@@ -136,48 +176,52 @@ class TimeLine():
         self.timelist = []
 
     def log_stamp(self, obj: ButtonElement):
-        MSG_TABLE = [["勤務開始", "勤務終了", "休憩終了"],
-                     ["？",      "休憩開始",  "?"]]
+        MSG_TABLE = ("勤務開始", "勤務終了", "休憩終了", "休憩開始")
         date = str(gyomu.timelist[-1].month) + \
             '/' + str(gyomu.timelist[-1].day)
         time = str(gyomu.timelist[-1].hour) + ':' + \
             str(gyomu.timelist[-1].minute)
         log_msg = date + ' ' + time + ' ' + \
-            MSG_TABLE[obj.event_id.value][EventManage.state_var.value] + '\n'
+            MSG_TABLE[EventManage.state_var.value] + '\n'
         self.log_area.config(state='normal')
-        self.log_area.insert(str(self.stamp_count)+'.0', log_msg)
+        self.log_area.insert(str(self.stamp_count) + '.0', log_msg)
         self.log_area.config(state='disable')
-        self.log_area.see(str(self.stamp_count)+'.0')
+        self.log_area.see(str(self.stamp_count) + '.0')
         self.stamp_count += 1
 
 
 def error(num):
-    messagebox.showerror("error", "error occur"+num)
+    messagebox.showerror("error", "error occur" + num)
     exit(False)
 
 
 def act_kinmu_end(obj):
-    user = id_form.get()
-    password = pass_form.get()
-    err = kics_register.KICS_acess(gyomu.timelist, user, password)
+    user = form_id.get()
+    password = form_pass.get()
+    # err = kics_register.KICS_acess(gyomu.timelist, user, password)
     gyomu.reset()
     err = True
-    if err == False:
+    if not err:
         error('kics_err')
 
 
 def update_button():
+    BUTTON_STATE_TBL = (('activate', 'inactivate', 'inactivate'),
+                        ('inactivate', 'activate', 'inactivate'),
+                        ('inactivate', 'activate', 'inactivate'),
+                        ('inactivate', 'inactivate', 'activate'))
+
     for button in b_array:
-        button.text.set(BUTTON_TBL[button.button_id.value]
-                        [EventManage.new_state.value][0])
-        button.b_element.config(
-            state=BUTTON_TBL[button.button_id.value][EventManage.new_state.value][1])
+        if BUTTON_STATE_TBL[button.button_id.value][EventManage.new_state.value] == 'activate':
+            button.activate()
+        elif BUTTON_STATE_TBL[button.button_id.value][EventManage.new_state.value] == 'inactivate':
+            button.inactivate()
 
 
-def state_label_update():
-    global state_label
-
-    set()
+def bind_sample(event):
+    # bindsample
+    # window.bind("<Button-3>", bind_sample)
+    print('a')
 
 
 if __name__ == "__main__":
@@ -189,32 +233,51 @@ if __name__ == "__main__":
 
     default_font = ("MSゴシック", "10", "bold")
 
-    state_label = tk.Label(master=window, text="state",
-                           font=("MSゴシック", "20", "bold"))
-
-    id_form = InputForm(master=window, text="DSC-ID",   font=default_font)
-    pass_form = InputForm(master=window, text="Password",
+    form_id = InputForm(master=window, text="DSC-ID", font=default_font)
+    form_pass = InputForm(master=window, text="Password",
                           font=default_font, show="*")
 
-    b1 = ButtonElement(frame=window, text="勤務開始", button_id=BUTTON_ID.KINMU_BUTTON,
-                       event_id=EVENT_VAR.KINMU_BUTTON_PUSHED)
-    b2 = ButtonElement(frame=window, text="休憩開始", button_id=BUTTON_ID.KYUKEI_BUTTON,
-                       event_id=EVENT_VAR.KYUKEI_BUTTON_PUSHED, state=tk.DISABLED)
+    b_kinmu_start = ButtonElement(
+        frame=window,
+        text="勤務開始",
+        button_id=BUTTON_ID.KINMU_START_BUTTON,
+        event_id=EVENT_VAR.KINMU_START_BUTTON_PUSHED)
+    b_kinmu_end = ButtonElement(
+        frame=window,
+        text="勤務終了",
+        button_id=BUTTON_ID.KINMU_END_BUTTON,
+        event_id=EVENT_VAR.KINMU_END_BUTTON_PUSHED)
+    b_kyukei_start = ButtonElement(
+        frame=window,
+        text="休憩開始",
+        button_id=BUTTON_ID.KYUKEI_START_BUTTON,
+        event_id=EVENT_VAR.KYUKEI_START_BUTTON_PUSHED)
+    b_kyukei_end = ButtonElement(
+        frame=window,
+        text="休憩終了",
+        button_id=BUTTON_ID.KYUKEI_END_BUTTON,
+        event_id=EVENT_VAR.KYUKEI_END_BUTTON_PUSHED)
 
     # このへんもっといい実装方法ありそう
-    b_array = (b1, b2)
+    b_array = (b_kinmu_start, b_kinmu_end, b_kyukei_start, b_kyukei_end)
 
     log = scrolledtext.ScrolledText(
         master=window, width=20, height=10, bd=5, state='disabled')
 
     # 配置
 
-    state_label.pack()
-    id_form.pack()
-    pass_form.pack()
-    b1.b_element.pack()
-    b2.b_element.pack()
+    # form_id.pack()
+    # form_pass.pack()
+    b_kinmu_start.b_element.pack()
+    b_kinmu_end.b_element.pack()
+    b_kyukei_start.b_element.pack()
+    b_kyukei_end.b_element.pack()
     log.pack()
+
+    b_kinmu_start.activate()
+    b_kinmu_end.inactivate()
+    b_kyukei_start.inactivate()
+    b_kyukei_end.inactivate()
 
     gyomu = TimeLine(log)
 
