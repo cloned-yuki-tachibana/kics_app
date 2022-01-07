@@ -36,11 +36,11 @@ class KINMU_JOHO():
         else:
             self.G_min = "00"
 
-def KICS_acess(timelist):
+def KICS_acess(timelist, user, password):
 
     kics_info = KINMU_JOHO(timelist)
-    kics_info.USER     = ""
-    kics_info.PASSWORD = ""
+    kics_info.USER     = user
+    kics_info.PASSWORD = password
 
     options = EdgeOptions()
     options.use_chromium = True
@@ -59,7 +59,7 @@ def KICS_acess(timelist):
         wait.until(EC.presence_of_all_elements_located)
 
         handle_array = driver.window_handles
-        driver.switch_to.window(handle_array[1])
+        driver.switch_to.window(handle_array[-1])
 
         js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "'+kics_info.S_hour+'"; \
                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "'+kics_info.S_min+'" ; \
