@@ -1,45 +1,20 @@
 #!/usr/bin/env python
-from selenium import webdriver
+
 from msedge.selenium_tools import EdgeOptions
 from msedge.selenium_tools import Edge
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.alert import Alert
-import datetime
+import datetime # for test
 import time
 
-
-class KINMU_JOHO():
-    def __init__(self, timelist):
-        self.time_calc(timelist)
-
-    def time_calc(self, timelist):
-        work_time_sum = datetime.timedelta()
-        for i in range(0, len(timelist), 2):
-            work_time_sum += (timelist[i + 1] - timelist[i])
-
-        work_time_sum_hour = work_time_sum // datetime.timedelta(hours=1)
-        work_time_sum_minute = work_time_sum.seconds % datetime.timedelta(
-            hours=1).seconds // 60
-
-        self.S_hour = str(timelist[0].hour).zfill(2)
-        self.S_min = str(timelist[0].minute).zfill(2)
-        self.E_hour = str(timelist[-1].hour).zfill(2)
-        self.E_min = str(timelist[-1].minute).zfill(2)
-        self.G_hour = str(work_time_sum_hour).zfill(2)
-        if work_time_sum_minute >= 45:
-            self.G_min = "45"
-        elif work_time_sum_minute >= 30:
-            self.G_min = "30"
-        elif work_time_sum_minute >= 15:
-            self.G_min = "15"
-        else:
-            self.G_min = "00"
+import timeline
 
 
 def KICS_acess(timelist: list, register: dict):
 
-    kics_info = KINMU_JOHO(timelist)
+    timeline.get_kics_time()
+
     USER = register.get('id')
     PASSWORD = register.get('password')
 
@@ -66,18 +41,18 @@ def KICS_acess(timelist: list, register: dict):
             handle_array = driver.window_handles
             driver.switch_to.window(handle_array[-1])
 
-            js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "' + kics_info.S_hour + '"; \
-                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "' + kics_info.S_min + '" ; \
-                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "' + kics_info.E_hour + '"; \
-                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "' + kics_info.E_min + '" ; \
-                appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "' + kics_info.G_hour + '"; \
-                appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "' + kics_info.G_min + '" ;'
+            js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "' + timeline.start_hour + '"; \
+                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "' + timeline.start_min + '" ; \
+                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "' + timeline.end_hour + '"; \
+                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "' + timeline.end_min + '" ; \
+                appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "' + timeline.sum_hour + '"; \
+                appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "' + timeline.sum_min + '" ;'
             driver.execute_script(js)
 
             driver.execute_script('appFrame.ok_onClick();')
             wait.until(EC.presence_of_all_elements_located)
-            #画面の遷移待ち
-            time.sleep(3)
+
+            time.sleep(3) # 画面の遷移待ち
             driver.execute_script(
                 'appFrame.doAction("/KinmuTorokuKakuninEntry");')
             error = (True, '正常に登録できました')

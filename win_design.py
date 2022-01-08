@@ -1,38 +1,39 @@
 #!/bin/env python
 
 import tkinter as tk
+from tkinter import scrolledtext
 import kics_register
 import vpn_control
-import TimeLine
+import timeline
 import functools
-from enum import Enum
 
-import SMConstants
+import SM_constants
 
 
 KINMU_START_ARGS = {
     'text': "勤務開始",
-    'event_id': SMConstants.EVENT_VAR.KINMU_START_BUTTON_PUSHED,
+    'event_id': SM_constants.EVENT_VAR.KINMU_START_BUTTON_PUSHED,
     'button_state': ('activate', 'inactivate', 'inactivate'),
 }
 
 KINMU_END_ARGS = {
     'text': "勤務終了",
-    'event_id': SMConstants.EVENT_VAR.KINMU_END_BUTTON_PUSHED,
+    'event_id': SM_constants.EVENT_VAR.KINMU_END_BUTTON_PUSHED,
     'button_state': ('inactivate', 'activate', 'inactivate'),
 }
 
 KYUKEI_START_ARGS = {
     'text': "休憩開始",
-    'event_id': SMConstants.EVENT_VAR.KYUKEI_START_BUTTON_PUSHED,
+    'event_id': SM_constants.EVENT_VAR.KYUKEI_START_BUTTON_PUSHED,
     'button_state': ('inactivate', 'activate', 'inactivate'),
 }
 
 KYUKEI_END_ARGS = {
     'text': "休憩終了",
-    'event_id': SMConstants.EVENT_VAR.KYUKEI_END_BUTTON_PUSHED,
+    'event_id': SM_constants.EVENT_VAR.KYUKEI_END_BUTTON_PUSHED,
     'button_state': ('inactivate', 'inactivate', 'activate'),
 }
+
 
 class ButtonElement():
     b_obj_list = []
@@ -41,7 +42,7 @@ class ButtonElement():
     def __init__(
             self,
             text: str = '',
-            event_id = None,
+            event_id=None,
             button_state: tuple = (),
             *args):
         self.text = tk.StringVar()
@@ -82,7 +83,7 @@ class ButtonElement():
             self.inactivate()
 
     @classmethod
-    def update_button(cls, new_state:int):
+    def update_button(cls, new_state: int):
         for b_tuple in cls.b_obj_list:
             if cls.b_state_dict[b_tuple['id']
                                 ][new_state] == 'activate':
@@ -93,7 +94,10 @@ class ButtonElement():
     @classmethod
     def button_click_event_setting(cls, func):
         for b_tuple in cls.b_obj_list:
-            b_tuple['obj'].b_element.configure(command=functools.partial(func, b_tuple['obj'], b_tuple['obj'].event_id))
+            b_tuple['obj'].b_element.configure(
+                command=functools.partial(
+                    func, b_tuple['obj'], b_tuple['obj'].event_id))
+
 
 class ButtonFrame(tk.Frame):
     def __init__(self, leftb_dict: dict, rightb_dict: dict):
@@ -120,6 +124,94 @@ class InputFrame(tk.Frame):
         self.entry.delete(0, tk.END)
         self.entry.insert(0, text)
 
+
+class TimeStampLogBox(scrolledtext.ScrolledText):
+    def __init__(self):
+        logbox_dict = {'width': 20, 'height': 10, 'bd': 5, 'state': 'disabled'}
+        super().__init__(**logbox_dict)
+        self.stamp_count = 1
+        self.stamp_str = []
+
+    def stamp(self, action_id: int):
+        MSG_TABLE = ("勤務開始", "勤務終了", "休憩開始", "休憩終了")
+        date = str(timeline.timelist[-1].month) + \
+            '/' + str(timeline.timelist[-1].day)
+        time = str(timeline.timelist[-1].hour).zfill(2) + ':' + \
+            str(timeline.timelist[-1].minute).zfill(2)
+        log_msg = date + ' ' + time + ' ' + \
+            MSG_TABLE[action_id] + '\n'
+        self.config(state='normal')
+        self.insert(str(self.stamp_count) + '.0', log_msg)
+        self.config(state='disable')
+        self.see(str(self.stamp_count) + '.0')
+        self.stamp_count += 1
+
+
+class TimeInfoFrame(tk.Frame):
+    def __init__(self):
+        super().__init__(width=200, bd=1, relief=tk.RAISED)
+        self.l_work_state_text = tk.StringVar()
+        self.l_work_start_text = tk.StringVar()
+        self.l_work_sum_text = tk.StringVar()
+
+        self.l_work_state_text.set("勤務前")
+        self.l_work_sum_text.set("勤務時間合計")
+
+        self.l_work_state = tk.Label(
+            textvariable=self.l_work_state_text, font=(
+                "MSポップ", "20", "bold"), takefocus=False)
+        self.l_work_start = tk.Label(font=("MSポップ", "10", "bold"))
+        self.l_work_sum = tk.Label(
+            textvariable=self.l_work_sum_text, font=(
+                "MSポップ", "10", "bold"), takefocus=False)
+
+        self.time_reset()
+
+        self.l_work_state.pack(in_=self)
+        self.l_work_start.pack(in_=self)
+        self.l_work_sum.pack(in_=self)
+
+    def state_update(self, text: str):
+        self.l_work_state_text.set(text)
+        self.l_work_state.config(textvariable=self.l_work_state_text)
+
+    def start_update(self, start_time):
+        timeline.start_time_calc(start_time)
+        self.l_work_start_text.set(
+            "開始時刻 " +
+            timeline.start_hour +
+            ':' +
+            timeline.start_min)
+        self.l_work_start.config(textvariable=self.l_work_start_text)
+        self.sum_update()
+
+    def sum_update(self):
+        try:
+            timeline.sum_time_calc()
+            self.l_work_sum_text.set(
+                "勤務時間合計 " + timeline.sum_hour + "時間" + timeline.sum_min + "分")
+            self.l_work_sum.config(textvariable=self.l_work_sum_text)
+
+        except BaseException:
+            pass
+        finally:
+            self.after_id = self.after(60000, self.sum_update)
+
+    def time_reset(self):
+        self.l_work_start_text.set("開始時刻 -- : --")
+        self.l_work_start.config(textvariable=self.l_work_start_text)
+        try:
+            self.after_cancel(self.after_id)
+        except BaseException:
+            pass
+
+
+def bind_sample(window, event, func):
+    # bindsample
+    event = "<Button-3>"
+    window.bind(event, func)
+
+
 class WindowSetting(tk.Tk):
     def __init__(self, *args):
         super().__init__()
@@ -136,14 +228,14 @@ class WindowSetting(tk.Tk):
             entry_dict={'show': "*"})
 
         self.f_button_kinmu = ButtonFrame(leftb_dict=KINMU_START_ARGS,
-                                        rightb_dict=KINMU_END_ARGS)
+                                          rightb_dict=KINMU_END_ARGS)
 
         self.f_button_kyukei = ButtonFrame(leftb_dict=KYUKEI_START_ARGS,
-                                        rightb_dict=KYUKEI_END_ARGS)
+                                           rightb_dict=KYUKEI_END_ARGS)
 
-        self.logbox = TimeLine.TimeStampLogBox()
+        self.logbox = TimeStampLogBox()
 
-        self.statebox = TimeLine.TimeInfoFrame()
+        self.statebox = TimeInfoFrame()
         # 配置
 
         self.statebox.pack(in_=self)
@@ -155,5 +247,6 @@ class WindowSetting(tk.Tk):
 
         self.logbox.pack(in_=self)
 
-if __name__=='___main__':
+
+if __name__ == '___main__':
     pass
