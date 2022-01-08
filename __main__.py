@@ -1,5 +1,5 @@
 #!/bin/env python
-import datetime
+
 from enum import Enum
 from time import time
 import tkinter as tk
@@ -7,10 +7,11 @@ from tkinter import Event, messagebox
 import tkinter
 from tkinter import font
 from tkinter.constants import DISABLED, FALSE, TRUE
-from tkinter import scrolledtext
+
 
 import kics_register
 import vpn_control
+import TimeLine
 
 
 class STATE_VAR(Enum):
@@ -26,15 +27,6 @@ class ACTION_VAR(Enum):
     KYUKEI_START = 2
     KYUKEI_END = 3
     ACTION_TOAL = 4  # dummy
-
-
-# タプルにオブジェクトidを登録する形の方がいい？
-class BUTTON_ID(Enum):
-    KINMU_START_BUTTON = 0
-    KINMU_END_BUTTON = 1
-    KYUKEI_START_BUTTON = 2
-    KYUKEI_END_BUTTON = 3
-    BUTTON_TOTAL = 4  # dummy
 
 
 class EVENT_VAR(Enum):
@@ -79,9 +71,8 @@ class EventManage():
         # ret = messagebox.askyesno("確認", msg)
         if ret == TRUE:
             ButtonElement.update_button()
-            # ここで直接gyomuを参照してるのが微妙感ある
-            gyomu.get_time()
-            gyomu.log_stamp(obj)
+            TimeLine.get_time()
+            logbox.stamp(action_id=cls.action.value)
             if cls.action == ACTION_VAR.KINMU_END:
                 act_kinmu_end(obj)
             elif cls.action == ACTION_VAR.KINMU_START:
@@ -157,7 +148,7 @@ class ButtonFrame(tk.Frame):
         self.right_button.b_element.pack(in_=self, side=tk.RIGHT)
 
 
-class InputForm(tk.Frame):
+class InputFrame(tk.Frame):
     def __init__(self, label_dict: dict, entry_dict: dict):
         super().__init__()
         self.label = tk.Label(**label_dict)
@@ -173,36 +164,6 @@ class InputForm(tk.Frame):
         self.entry.insert(0, text)
 
 
-class TimeLine():
-    def __init__(self, log_area: scrolledtext.ScrolledText):
-        self.timelist = []
-        self.stamp_count = 1
-        self.stamp_str = []
-        self.log_area = log_area
-        self.log_area.config(state='disable')
-
-    def get_time(self):
-        self.timelist.append(datetime.datetime.now())
-        # self.log_stamp()
-
-    def reset(self):
-        self.timelist = []
-
-    def log_stamp(self, obj: ButtonElement):
-        MSG_TABLE = ("勤務開始", "勤務終了", "休憩開始", "休憩終了")
-        date = str(gyomu.timelist[-1].month) + \
-            '/' + str(gyomu.timelist[-1].day)
-        time = str(gyomu.timelist[-1].hour) + ':' + \
-            str(gyomu.timelist[-1].minute)
-        log_msg = date + ' ' + time + ' ' + \
-            MSG_TABLE[EventManage.action.value] + '\n'
-        self.log_area.config(state='normal')
-        self.log_area.insert(str(self.stamp_count) + '.0', log_msg)
-        self.log_area.config(state='disable')
-        self.log_area.see(str(self.stamp_count) + '.0')
-        self.stamp_count += 1
-
-
 def error(num):
     messagebox.showerror("error", "error occur" + num)
     exit(False)
@@ -212,7 +173,7 @@ def act_kinmu_end(obj):
     user = f_form_id.get()
     password = f_form_pass.get()
     # err = kics_register.KICS_acess(gyomu.timelist, user, password)
-    gyomu.reset()
+    TimeLine.reset()
     err = True
     if not err:
         error('kics_err')
@@ -234,10 +195,10 @@ if __name__ == "__main__":
     default_font = ("MSゴシック", "10", "bold")
 
     id_label_args = {'text': "DSC-ID", 'font': default_font}
-    f_form_id = InputForm(label_dict=id_label_args, entry_dict={})
+    f_form_id = InputFrame(label_dict=id_label_args, entry_dict={})
 
     pass_label_args = {'text': "Password", 'font': default_font}
-    f_form_pass = InputForm(
+    f_form_pass = InputFrame(
         label_dict=pass_label_args,
         entry_dict={
             'show': "*"})
@@ -268,20 +229,16 @@ if __name__ == "__main__":
     f_button_kyukei = ButtonFrame(leftb_dict=kyukei_start_button_options,
                                   rightb_dict=kyukei_end_button_options)
 
-    # このへんもっといい実装方法ありそう
-    log = scrolledtext.ScrolledText(
-        master=window, width=20, height=10, bd=5, state='disabled')
+    logbox = TimeLine.TimeStampLogBox()
 
     # 配置
 
-    f_form_id.pack()
-    f_form_pass.pack()
+    f_form_id.pack(in_=window)
+    f_form_pass.pack(in_=window)
 
-    f_button_kinmu.pack(pady=2)
-    f_button_kyukei.pack(pady=2)
+    f_button_kinmu.pack(in_=window, pady=2)
+    f_button_kyukei.pack(in_=window, pady=2)
 
-    log.pack()
-
-    gyomu = TimeLine(log)
+    logbox.pack(in_=window)
 
     window.mainloop()
