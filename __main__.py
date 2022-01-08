@@ -69,9 +69,10 @@ class EventManage():
     # state machine event management
     state_var = STATE_VAR.KINMU_MAE
 
-    def do_action(self, event_id: EVENT_VAR):
-        EventManage.new_state = NEXT_STATE_TBL[event_id.value][EventManage.state_var.value]
-        EventManage.action = ACTION_TBL[event_id.value][EventManage.state_var.value]
+    @classmethod
+    def do_action(cls, obj, event_id: EVENT_VAR):
+        cls.new_state = NEXT_STATE_TBL[event_id.value][cls.state_var.value]
+        cls.action = ACTION_TBL[event_id.value][cls.state_var.value]
         # print("confirm")
         ret = TRUE
         # msg = CONFIRM_MSG_TBL[EventManage.action.value]
@@ -80,10 +81,10 @@ class EventManage():
             ButtonElement.update_button()
             # ここで直接gyomuを参照してるのが微妙感ある
             gyomu.get_time()
-            gyomu.log_stamp(self)
-            if EventManage.action == ACTION_VAR.KINMU_END:
-                act_kinmu_end(self)
-            elif EventManage.action == ACTION_VAR.KINMU_START:
+            gyomu.log_stamp(obj)
+            if cls.action == ACTION_VAR.KINMU_END:
+                act_kinmu_end(obj)
+            elif cls.action == ACTION_VAR.KINMU_START:
                 pass
 
             # if state_var==STATE_VAR.KINMU_CHU:
@@ -91,10 +92,10 @@ class EventManage():
             # else :
                 # vpn_control.vpn_control("connect")
 
-            EventManage.state_var = EventManage.new_state
+            cls.state_var = cls.new_state
 
 
-class ButtonElement(EventManage):
+class ButtonElement():
     b_obj_list = []
     b_state_dict = {}
 
@@ -121,7 +122,7 @@ class ButtonElement(EventManage):
         self.initial_button_state(button_state[0])
 
     def click(self):
-        super().do_action(self.event_id)
+        EventManage.do_action(self, self.event_id)
 
     def activate(self):
         self.b_element.config(state=tk.NORMAL, background="palegreen",
