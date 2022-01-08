@@ -17,6 +17,7 @@ class KINMU_JOHO():
         work_time_sum = datetime.timedelta()
         for i in range(0, len(timelist), 2):
             work_time_sum += (timelist[i + 1] - timelist[i])
+
         work_time_sum_hour = work_time_sum // datetime.timedelta(hours=1)
         work_time_sum_minute = work_time_sum.seconds % datetime.timedelta(
             hours=1).seconds // 60

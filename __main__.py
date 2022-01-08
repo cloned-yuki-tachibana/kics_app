@@ -65,20 +65,23 @@ class EventManage():
         cls.action = ACTION_TBL[event_id.value][cls.state_var.value]
         # print("confirm")
         ret = TRUE
-        # msg = CONFIRM_MSG_TBL[EventManage.action.value]
-        # ret = messagebox.askyesno("確認", msg)
+        #msg = CONFIRM_MSG_TBL[EventManage.action.value]
+        #ret = messagebox.askyesno(title="確認", message=msg, parent=window)
         if ret == TRUE:
             ButtonElement.update_button()
             TimeLine.get_time()
             logbox.stamp(action_id=cls.action.value)
             if cls.action == ACTION_VAR.KINMU_END:
                 act_kinmu_end(obj)
-            elif cls.action == ACTION_VAR.KINMU_START:
-                pass
 
-            # if state_var==STATE_VAR.KINMU_CHU:
+            elif cls.action == ACTION_VAR.KINMU_START:
+                statebox.start_update(TimeLine.timelist[0])
+
+            if cls.state_var==STATE_VAR.KINMU_CHU:
+                pass
                 # vpn_control.vpn_control("disconnect")
-            # else :
+            else :
+                pass
                 # vpn_control.vpn_control("connect")
 
             cls.state_var = cls.new_state
@@ -102,8 +105,7 @@ class ButtonElement():
             textvariable=self.text,
             font=self.font,
             command=self.click,
-            state=tk.NORMAL,
-            cursor="hand2")
+            state=tk.NORMAL)
 
         ButtonElement.b_obj_list.append({'id': id(self), 'obj': self})
         ButtonElement.b_state_dict[id(self)] = button_state
@@ -114,12 +116,19 @@ class ButtonElement():
         EventManage.do_action(self, self.event_id)
 
     def activate(self):
-        self.b_element.config(state=tk.NORMAL, background="palegreen",
-                              activebackground="limegreen", relief=tk.RAISED)
+        self.b_element.config(
+            state=tk.NORMAL,
+            background="palegreen",
+            activebackground="limegreen",
+            relief=tk.RAISED,
+            cursor="hand2")
 
     def inactivate(self):
         self.b_element.config(
-            state=tk.DISABLED, background="gray", relief=tk.GROOVE)
+            state=tk.DISABLED,
+            background="gray",
+            relief=tk.GROOVE,
+            cursor="arrow")
 
     def initial_button_state(self, initial_state):
         if initial_state == 'activate':
@@ -149,8 +158,9 @@ class ButtonFrame(tk.Frame):
 class InputFrame(tk.Frame):
     def __init__(self, label_dict: dict, entry_dict: dict):
         super().__init__()
-        self.label = tk.Label(**label_dict)
-        self.entry = tk.Entry(**entry_dict)
+        default_font = ("MSゴシック", "10", "bold")
+        self.label = tk.Label(**label_dict, font=default_font, takefocus=True)
+        self.entry = tk.Entry(**entry_dict, font=default_font, takefocus=True)
         self.label.pack(in_=self)
         self.entry.pack(in_=self)
 
@@ -168,18 +178,13 @@ def error(num):
 
 
 def act_kinmu_end(obj):
-    register = {'id':f_form_id.get(), 'password':f_form_pass.get()}
+    register = {'id': f_form_id.get(), 'password': f_form_pass.get()}
     # err = kics_register.KICS_acess(TimeLine.timelist, register)
     TimeLine.reset()
+    statebox.time_reset()
     err = True
     if not err:
         error('kics_err')
-
-
-def bind_sample(event):
-    # bindsample
-    # window.bind("<Button-3>", bind_sample)
-    print('a')
 
 
 if __name__ == "__main__":
@@ -189,16 +194,15 @@ if __name__ == "__main__":
     window.title('KICS AUTO')
     window.resizable(False, False)
 
-    default_font = ("MSゴシック", "10", "bold")
 
-    id_label_args = {'text': "DSC-ID", 'font': default_font}
+
+    id_label_args = {'text': "DSC-ID"}
     f_form_id = InputFrame(label_dict=id_label_args, entry_dict={})
 
-    pass_label_args = {'text': "Password", 'font': default_font}
+    pass_label_args = {'text': "Password"}
     f_form_pass = InputFrame(
         label_dict=pass_label_args,
-        entry_dict={
-            'show': "*"})
+        entry_dict={'show': "*"})
 
     kinmu_start_button_options = {
         'text': "勤務開始",
@@ -228,8 +232,10 @@ if __name__ == "__main__":
 
     logbox = TimeLine.TimeStampLogBox()
 
+    statebox = TimeLine.TimeInfoFrame()
     # 配置
 
+    statebox.pack(in_=window)
     f_form_id.pack(in_=window)
     f_form_pass.pack(in_=window)
 
