@@ -1,3 +1,5 @@
+#!/bin/env python
+
 import datetime
 from time import time
 from tkinter import scrolledtext
@@ -54,11 +56,11 @@ class TimeInfoFrame(tk.Frame):
 
         self.l_work_state = tk.Label(
             textvariable=self.l_work_state_text, font=(
-                "MSポップ", "20", "bold"))
+                "MSポップ", "20", "bold"), takefocus=False)
         self.l_work_start = tk.Label(font=("MSポップ", "10", "bold"))
         self.l_work_sum = tk.Label(
             textvariable=self.l_work_sum_text, font=(
-                "MSポップ", "10", "bold"))
+                "MSポップ", "10", "bold"), takefocus=False)
 
         self.time_reset()
 
@@ -101,9 +103,9 @@ class TimeInfoFrame(tk.Frame):
     def time_reset(self):
         self.l_work_start_text.set("開始時刻 -- : --")
         self.l_work_start.config(textvariable=self.l_work_start_text)
-        try :
+        try:
             self.after_cancel(self.after_id)
-        except :
+        except BaseException:
             pass
 
 
