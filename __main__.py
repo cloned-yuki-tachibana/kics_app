@@ -1,10 +1,8 @@
 #!/bin/env python
 
 from enum import Enum
-from time import time
 import tkinter as tk
 from tkinter import Event, messagebox
-import tkinter
 from tkinter import font
 from tkinter.constants import DISABLED, FALSE, TRUE
 
@@ -170,9 +168,8 @@ def error(num):
 
 
 def act_kinmu_end(obj):
-    user = f_form_id.get()
-    password = f_form_pass.get()
-    # err = kics_register.KICS_acess(gyomu.timelist, user, password)
+    register = {'id':f_form_id.get(), 'password':f_form_pass.get()}
+    # err = kics_register.KICS_acess(TimeLine.timelist, register)
     TimeLine.reset()
     err = True
     if not err:

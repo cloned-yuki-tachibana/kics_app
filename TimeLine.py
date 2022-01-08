@@ -33,5 +33,5 @@ class TimeStampLogBox(scrolledtext.ScrolledText):
         self.see(str(self.stamp_count) + '.0')
         self.stamp_count += 1
 
-    if __name__ == "__main__":
-        pass
+if __name__ == "__main__":
+    pass
