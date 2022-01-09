@@ -36,8 +36,8 @@ KYUKEI_END_ARGS = {
 
 
 class ButtonElement():
-    b_obj_list = []
-    b_state_dict = {}
+    funcs_4_update = []
+    funcs_4_set_click = []
 
     def __init__(
             self,
@@ -48,15 +48,14 @@ class ButtonElement():
         self.text = tk.StringVar()
         self.text.set(text)
         self.event_id = event_id
-        self.font = ("MSゴシック", "15", "bold")
+        self.state_list = button_state
         self.b_element = tk.Button(
             textvariable=self.text,
-            font=self.font,
+            font= ("MSゴシック", "15", "bold"),
             state=tk.NORMAL)
 
-        ButtonElement.b_obj_list.append({'id': id(self), 'obj': self})
-        ButtonElement.b_state_dict[id(self)] = button_state
-
+        ButtonElement.funcs_4_update.append(self.update_state)
+        ButtonElement.funcs_4_set_click.append(self.set_click_func)
         self.initial_button_state(button_state[0])
 
     def activate(self):
@@ -82,21 +81,24 @@ class ButtonElement():
         elif initial_state == 'inactivate':
             self.inactivate()
 
+    def update_state(self, new_state:int):
+        if self.state_list[new_state] == 'activate':
+            self.activate()
+        elif self.state_list[new_state] == 'inactivate':
+            self.inactivate()
+
+    def set_click_func(self, func):
+        self.b_element.configure(command=functools.partial(func, self, self.event_id))
+
     @classmethod
-    def update_button(cls, new_state: int):
-        for b_tuple in cls.b_obj_list:
-            if cls.b_state_dict[b_tuple['id']
-                                ][new_state] == 'activate':
-                b_tuple['obj'].activate()
-            elif cls.b_state_dict[b_tuple['id']][new_state] == 'inactivate':
-                b_tuple['obj'].inactivate()
+    def update_buttons(cls, new_state):
+        for b_func in cls.funcs_4_update:
+            b_func(new_state)
 
     @classmethod
     def button_click_event_setting(cls, func):
-        for b_tuple in cls.b_obj_list:
-            b_tuple['obj'].b_element.configure(
-                command=functools.partial(
-                    func, b_tuple['obj'], b_tuple['obj'].event_id))
+        for b_func in cls.funcs_4_set_click:
+            b_func(func)
 
 
 class ButtonFrame(tk.Frame):
@@ -149,7 +151,7 @@ class TimeStampLogBox(scrolledtext.ScrolledText):
 
 class TimeInfoFrame(tk.Frame):
     def __init__(self):
-        super().__init__(width=200, bd=1, relief=tk.RAISED)
+        super().__init__(width=200, bd=1, relief=tk.RAISED, background="skyblue")
         self.l_work_state_text = tk.StringVar()
         self.l_work_start_text = tk.StringVar()
         self.l_work_sum_text = tk.StringVar()
@@ -171,8 +173,9 @@ class TimeInfoFrame(tk.Frame):
         self.l_work_start.pack(in_=self)
         self.l_work_sum.pack(in_=self)
 
-    def state_update(self, text: str):
-        self.l_work_state_text.set(text)
+    def state_update(self, action_id):
+        MSG_TABLE = ("勤務中", "お疲れさまでした", "休憩中", "勤務中")
+        self.l_work_state_text.set(MSG_TABLE[action_id])
         self.l_work_state.config(textvariable=self.l_work_state_text)
 
     def start_update(self, start_time):
