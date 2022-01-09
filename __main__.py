@@ -17,7 +17,7 @@ CONFIRM_MSG_TBL = ("在宅勤務を開始します。よろしいですか",
 
 
 class StateMachine():
-    state_var = SM_constants.STATE_VAR.KINMU_MAE
+    state_var = SM_constants.INITIAL_STATE
 
     @classmethod
     def do_action(cls, obj, event_id: SM_constants.EVENT_VAR):
@@ -37,7 +37,7 @@ class StateMachine():
         win_design.ButtonElement.update_buttons(cls.new_state.value)
         timeline.push_time()
         window.statebox.state_update(action_id=cls.action.value)
-        window.logbox.stamp(action_id=cls.action.value)
+        #window.logbox.stamp(action_id=cls.action.value)
 
     @classmethod
     def act_kinmu_start(cls, obj, window: win_design.WindowSetting):
