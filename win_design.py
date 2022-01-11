@@ -2,62 +2,41 @@
 
 import tkinter as tk
 from tkinter import scrolledtext
-import kics_register
-import vpn_control
-import timeline
 import functools
 
-import SM_constants
+import timeline as tl
+import StateMachine as SM
 
 
-KINMU_START_ARGS = {
-    'text': "勤務開始",
-    'event_id': SM_constants.EVENT_VAR.KINMU_START_BUTTON_PUSHED,
-    'state_list': ('activate', 'inactivate', 'inactivate'),
-}
-
-KINMU_END_ARGS = {
-    'text': "勤務終了",
-    'event_id': SM_constants.EVENT_VAR.KINMU_END_BUTTON_PUSHED,
-    'state_list': ('inactivate', 'activate', 'inactivate'),
-}
-
-KYUKEI_START_ARGS = {
-    'text': "休憩開始",
-    'event_id': SM_constants.EVENT_VAR.KYUKEI_START_BUTTON_PUSHED,
-    'state_list': ('inactivate', 'activate', 'inactivate'),
-}
-
-KYUKEI_END_ARGS = {
-    'text': "休憩終了",
-    'event_id': SM_constants.EVENT_VAR.KYUKEI_END_BUTTON_PUSHED,
-    'state_list': ('inactivate', 'inactivate', 'activate'),
-}
-
-
-class ButtonElement():
-    funcs_4_update = []
-    funcs_4_set_click = []
-
-    def __init__(
-            self,
-            text: str = '',
-            event_id=None,
-            state_list: tuple = ()):
+class KicsAppButton(tk.Button):
+    def __init__(self, sm: SM.StateMachine,
+                 text='', event_id=None, state_list=()):
         self.text = tk.StringVar(value=text)
         self.event_id = event_id
         self.state_list = state_list
-        self.b_element = tk.Button(
+        super().__init__(
             textvariable=self.text,
-            font=("MSゴシック", "15", "bold"),
+            font=(
+                "MSゴシック",
+                "15",
+                "bold"),
+            command=functools.partial(sm.do_action, self.event_id),
             state=tk.NORMAL)
 
-        ButtonElement.funcs_4_update.append(self.update_state)
-        ButtonElement.funcs_4_set_click.append(self.set_click_func)
         self.set_initial_state()
+        self.register2sm(sm)
+
+    def set_initial_state(self):
+        self.update_state(self.state_list[0])
+
+    def update_state(self, state):
+        if state == 'activate':
+            self.activate()
+        elif state == 'inactivate':
+            self.inactivate()
 
     def activate(self):
-        self.b_element.configure(
+        self.configure(
             state=tk.NORMAL,
             background="palegreen",
             activebackground="limegreen",
@@ -66,49 +45,48 @@ class ButtonElement():
             takefocus=True)
 
     def inactivate(self):
-        self.b_element.configure(
+        self.configure(
             state=tk.DISABLED,
             background="gray",
             relief=tk.GROOVE,
             cursor="arrow",
             takefocus=False)
 
-    def set_initial_state(self):
-        self.update_state(SM_constants.INITIAL_STATE.value)
+    def register2sm(self, sm: SM.StateMachine):
+        sm.add_common_act(self.act_update_state)
 
-    def update_state(self, new_state: int):
-        if self.state_list[new_state] == 'activate':
-            self.activate()
-        elif self.state_list[new_state] == 'inactivate':
-            self.inactivate()
-
-    def set_click_func(self, func):
-        self.b_element.configure(
-            command=functools.partial(
-                func, self, self.event_id))
-
-    @classmethod
-    def update_buttons(cls, new_state):
-        for b_func in cls.funcs_4_update:
-            b_func(new_state)
-
-    @classmethod
-    def button_click_event_setting(cls, func):
-        for b_func in cls.funcs_4_set_click:
-            b_func(func)
+    def act_update_state(
+            self,
+            sm: SM.StateMachine,
+            event_id: int,
+            *args,
+            **kwargs):
+        self.update_state(self.state_list[sm.new_state.value])
 
 
-class ButtonFrame(tk.Frame):
-    def __init__(self, leftb_dict: dict, rightb_dict: dict):
-        super().__init__()
-        self.left_button = ButtonElement(**leftb_dict)
-        self.right_button = ButtonElement(**rightb_dict)
-        self.left_button.b_element.pack(in_=self, side=tk.LEFT)
-        self.right_button.b_element.pack(in_=self, side=tk.RIGHT)
+class TwoButtonFrame(tk.Frame):
+    def __init__(
+            self,
+            button_class,
+            sm: SM.StateMachine,
+            leftb_dict: dict,
+            rightb_dict: dict,
+            **frame_dict):
+        super().__init__(**frame_dict)
+        self.left_button: tk.Button = button_class(sm=sm, **leftb_dict)
+        self.right_button: tk.Button = button_class(sm=sm, **rightb_dict)
+
+        self.left_button.pack_configure(in_=self, side=tk.LEFT)
+        self.right_button.pack_configure(in_=self, side=tk.RIGHT)
+
+
+class FourButtonFrame(tk.Frame):
+    # not yet
+    pass
 
 
 class InputFrame(tk.Frame):
-    def __init__(self, label_dict: dict, entry_dict: dict):
+    def __init__(self, label_dict: dict, entry_dict: dict, **frame_dict):
         super().__init__()
         default_font = ("MSゴシック", "10", "bold")
         if 'font' in label_dict:
@@ -128,32 +106,44 @@ class InputFrame(tk.Frame):
         self.entry.insert(0, text)
 
 
-class TimeStampLogBox(scrolledtext.ScrolledText):
-    def __init__(self):
-        super().__init__(width=20, height=10, bd=10, state=tk.DISABLED)
+class LogBox(scrolledtext.ScrolledText):
+    def __init__(self, *args, **kwargs):
+        super().__init__(**kwargs, state=tk.DISABLED)
         self.stamp_count = 1
 
-    def stamp(self, action_id: int):
-        MSG_TABLE = ("勤務開始", "勤務終了", "休憩開始", "休憩終了")
-        date = str(timeline.timelist[-1].month) + \
-            '/' + str(timeline.timelist[-1].day)
-        time = str(timeline.timelist[-1].hour).zfill(2) + ':' + \
-            str(timeline.timelist[-1].minute).zfill(2)
-        log_msg = date + ' ' + time + ' ' + \
-            MSG_TABLE[action_id] + '\n'
-        self.configure(state='normal')
+    def stamp(self, msg):
+        now = tl.nichiji.now('all')
+        log_msg = now.date + ' ' + now.jikan + ' ' + msg + '\n'
+        self.configure(state=tk.NORMAL)
         self.insert(str(self.stamp_count) + '.0', log_msg)
         self.configure(state='disable')
         self.see(str(self.stamp_count) + '.0')
         self.stamp_count += 1
 
+    def clear(self):
+        self.delete('0', tk.END)
+        self.stamp_count = 1
 
-class TimeInfoFrame(tk.Frame):
-    def __init__(self):
+
+class KicsAppTimeStampLogBox(LogBox):
+    def __init__(self, sm: SM.StateMachine):
+        super().__init__(width=20, height=10, bd=10)
+        self.register2sm(sm)
+
+    def register2sm(self, sm: SM.StateMachine):
+        sm.add_common_act(self.act_stamp)
+
+    def act_stamp(self, sm: SM.StateMachine, event_id, *args, **kwargs):
+        MSG_TABLE = ("勤務開始", "勤務終了", "休憩開始", "休憩終了")
+        super().stamp(MSG_TABLE[sm.action.value])
+
+
+class KicsAppTimeInfoFrame(tk.Frame):
+    def __init__(self, sm, *args, **kwargs):
         bg = "powderblue"
-        super().__init__(width=200, bd=1, relief=tk.RAISED, background=bg)
+        super().__init__(width=200, bd=1, relief=tk.RAISED, background=bg, *args, **kwargs)
         self.l_work_state_text = tk.StringVar(value="勤務前")
-        self.l_work_start_text = tk.StringVar()
+        self.l_work_start_text = tk.StringVar(value="開始時刻 -- : -- ")
         self.l_work_sum_text = tk.StringVar(value="勤務時間合計 00時間00分")
 
         self.l_work_state = tk.Label(
@@ -166,37 +156,59 @@ class TimeInfoFrame(tk.Frame):
             textvariable=self.l_work_sum_text, font=(
                 "MSポップ", "10", "bold"), takefocus=False, bg=bg)
 
-        self.time_reset()
+        self.l_work_state.pack_configure(in_=self)
+        self.l_work_start.pack_configure(in_=self)
+        self.l_work_sum.pack_configure(in_=self)
 
-        self.l_work_state.pack(in_=self)
-        self.l_work_start.pack(in_=self)
-        self.l_work_sum.pack(in_=self)
+        self.register2sm(sm)
 
-    def state_update(self, action_id):
-        MSG_TABLE = ("勤務中", "お疲れ", "休憩中", "勤務中")
-        self.l_work_state_text.set(MSG_TABLE[action_id])
-
-    def start_update(self, start_time):
-        timeline.start_time_calc(start_time)
-        self.l_work_start_text.set(
-            "開始時刻 " +
-            timeline.start_hour +
-            ':' +
-            timeline.start_min)
-        self.sum_update()
-
-    def sum_update(self):
+    def sum_update(self, timelist: tl.KicsAppTimeline):
         try:
-            timeline.sum_time_calc()
+            sum_time = timelist.get_sum_time()
             self.l_work_sum_text.set(
-                "勤務時間合計 " + timeline.sum_hour + "時間" + timeline.sum_min + "分")
+                "勤務時間合計 " +
+                sum_time.hour +
+                "時間" +
+                sum_time.minute +
+                "分")
         except BaseException:
             pass
         finally:
             # update every minute
             self.after_id = self.after(60000, self.sum_update)
 
-    def time_reset(self):
+    def register2sm(self, sm: SM.StateMachine):
+        sm.add_common_act(self.act_state_update)
+
+        sm.add_act(type(sm).ACTION_VAR.KINMU_START, 1, self.act_start_update)
+        sm.add_act(type(sm).ACTION_VAR.KINMU_END, 1, self.act_time_reset)
+
+    def act_state_update(
+            self,
+            sm: SM.StateMachine,
+            event_id: int,
+            *args,
+            **kwargs):
+        MSG_TABLE = ("勤務中", "お疲れ", "休憩中", "勤務中")
+
+        self.l_work_state_text.set(MSG_TABLE[sm.action.value])
+
+    def act_start_update(
+            self,
+            sm: SM.StateMachine,
+            event_id: int,
+            *args,
+            **kwargs):
+        now = tl.nichiji.now('all')
+        self.l_work_start_text.set("開始時刻 " + now.jikan)
+        self.sum_update(sm.timeline)
+
+    def act_time_reset(
+            self,
+            sm: SM.StateMachine,
+            event_id: int,
+            *args,
+            **kwargs):
         self.l_work_start_text.set("開始時刻 -- : -- ")
         try:
             self.after_cancel(self.after_id)
@@ -204,19 +216,9 @@ class TimeInfoFrame(tk.Frame):
             pass
 
 
-def bind_sample(window, event, func):
-    # bindsample
-    event = "<Button-3>"
-    window.bind(event, func)
-
-
-class WindowSetting(tk.Tk):
-    def __init__(self, *args):
+class KicsAppFrame(tk.Frame):
+    def __init__(self, sm: SM.StateMachine):
         super().__init__()
-        # windowの大きさを自動で設定したい？
-        self.geometry('200x260')
-        self.title('KICS AUTO')
-        self.resizable(False, False)
 
         id_label_args = {'text': "DSC-ID"}
         self.f_form_id = InputFrame(label_dict=id_label_args, entry_dict={})
@@ -226,26 +228,81 @@ class WindowSetting(tk.Tk):
             label_dict=pass_label_args,
             entry_dict={'show': "*"})
 
-        self.f_button_kinmu = ButtonFrame(leftb_dict=KINMU_START_ARGS,
-                                          rightb_dict=KINMU_END_ARGS)
+        KINMU_START_ARGS = {
+            'text': "勤務開始",
+            'event_id': type(sm).EVENT_VAR.KINMU_START_BUTTON_PUSHED,
+            'state_list': ('activate', 'inactivate', 'inactivate'),
+        }
 
-        self.f_button_kyukei = ButtonFrame(leftb_dict=KYUKEI_START_ARGS,
-                                           rightb_dict=KYUKEI_END_ARGS)
+        KINMU_END_ARGS = {
+            'text': "勤務終了",
+            'event_id': type(sm).EVENT_VAR.KINMU_END_BUTTON_PUSHED,
+            'state_list': ('inactivate', 'activate', 'inactivate'),
+        }
 
-        self.statebox = TimeInfoFrame()
-        #self.logbox = TimeStampLogBox()
+        self.f_button_kinmu = TwoButtonFrame(button_class=KicsAppButton,
+                                             sm=sm,
+                                             leftb_dict=KINMU_START_ARGS,
+                                             rightb_dict=KINMU_END_ARGS)
+
+        KYUKEI_START_ARGS = {
+            'text': "休憩開始",
+            'event_id': type(sm).EVENT_VAR.KYUKEI_START_BUTTON_PUSHED,
+            'state_list': ('inactivate', 'activate', 'inactivate'),
+        }
+
+        KYUKEI_END_ARGS = {
+            'text': "休憩終了",
+            'event_id': type(sm).EVENT_VAR.KYUKEI_END_BUTTON_PUSHED,
+            'state_list': ('inactivate', 'inactivate', 'activate'),
+        }
+
+        self.f_button_kyukei = TwoButtonFrame(button_class=KicsAppButton,
+                                              sm=sm,
+                                              leftb_dict=KYUKEI_START_ARGS,
+                                              rightb_dict=KYUKEI_END_ARGS)
+
+        self.statebox = KicsAppTimeInfoFrame(sm=sm)
+        self.logbox = KicsAppTimeStampLogBox(sm=sm)
 
         # 配置
-
-        self.statebox.pack(in_=self)
-        self.f_form_id.pack(in_=self)
-        self.f_form_pass.pack(in_=self)
-
-        self.f_button_kinmu.pack(in_=self, pady=2)
-        self.f_button_kyukei.pack(in_=self, pady=2)
-
-        #self.logbox.pack(in_=self)
+        self.statebox.pack_configure(in_=self)
+        self.f_form_id.pack_configure(in_=self)
+        self.f_form_pass.pack_configure(in_=self)
+        self.f_button_kinmu.pack_configure(in_=self, pady=2)
+        self.f_button_kyukei.pack_configure(in_=self, pady=2)
+        self.logbox.pack_configure(in_=self)
 
 
-if __name__ == '___main__':
-    pass
+class KicsAppWindow(tk.Tk):
+    #def __init__(self):
+    #    #super().__init__()
+    #    self.geometry('200x260')
+    #    self.title('KICS AUTO')
+    #    self.resizable(False, False)
+
+    def register(self, widget):
+        widget.pack_configure(in_=self)
+
+
+def main():
+    class test_class():
+        def __init__(self):
+            self.name = "test"
+
+    def test_Factory(cls):
+        test1 = cls()
+        print(test1.name)
+        return test1
+
+    def bind_sample(window, event, func):
+        # bindsample
+        event = "<Button-3>"
+        window.bind(event, func)
+
+    test = test_Factory(test_class)
+    print(test.name)
+
+
+if __name__ == '__main__':
+    main()

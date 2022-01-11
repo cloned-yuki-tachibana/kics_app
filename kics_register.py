@@ -5,76 +5,88 @@ from msedge.selenium_tools import Edge
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.alert import Alert
-import datetime # for test
 import time
 
-import timeline
+import timeline as tl
+import StateMachine as SM
 
 
-def KICS_acess(timelist: list, register: dict):
+class KicsRegister():
+    def __init__(self, sm: SM.StateMachine):
+        self.register2sm(sm)
 
-    timeline.get_kics_time()
+    def register2sm(self, sm: SM.StateMachine):
+        sm.add_act(type(sm).ACTION_VAR.KINMU_END, 2, self.act_kics_register)
 
-    USER = register.get('id')
-    PASSWORD = register.get('password')
+    def act_kics_register(self, sm, *args, **kwargs):
 
-    if USER is None or USER == '' or PASSWORD is None or PASSWORD == '':
-        return (False, 'idかpassが入力されていません')
+        sm.timeline.get_kics_time()
 
-    options = EdgeOptions()
-    options.use_chromium = True
+        USER = sm.frame.f_form_id.get()
+        PASSWORD = sm.frame.f_form_pass.get()
 
-    options.add_argument("--headless")
-    with Edge(executable_path='C:\\WebDriver\\bin\\msedgedriver.exe') as driver:
-        try:
-            wait = WebDriverWait(driver=driver, timeout=30)
-            kics_url = 'http://kics.jinji.denso.co.jp/siteminderagent/forms_ja-JP/login-kics.fcc?TYPE=33554433&REALMOID=06-0007e4b9-ceba-18d0-b029-0e0e0a06b0a4&GUID=&SMAUTHREASON=0&METHOD=GET&SMAGENTNAME=-SM-HRqQr6ufcyxhIF0WsEzBihlJmLjJf14Q%2fr%2f7bkyx2DuLbqMW%2bF2WWjM%2fvtW%2bhiy1&TARGET=-SM-http%3a%2f%2fkics%2ejinji%2edenso%2eco%2ejp%2fa0tpkkics%2fapl%2fjsp%2fTop%2ejsp'
-            driver.get(kics_url)
+        if USER == '' or PASSWORD == '':
+            # 'idかpassが入力されていません'
+            print ('a')
+            return  # todo : show error
 
-            js = 'document.Login.USER.value=\"' + USER + '\"; \
-                document.Login.PASSWORD.value=\"' + PASSWORD + '\"; \
-                submitForm();'
+        return
 
-            driver.execute_script(js)
-            wait.until(EC.presence_of_all_elements_located)
+        options = EdgeOptions()
+        options.use_chromium = True
 
-            handle_array = driver.window_handles
-            driver.switch_to.window(handle_array[-1])
+        options.add_argument("--headless")
+        with Edge(executable_path='C:\\WebDriver\\bin\\msedgedriver.exe') as driver:
+            try:
+                wait = WebDriverWait(driver=driver, timeout=30)
+                kics_url = 'http://kics.jinji.denso.co.jp/siteminderagent/forms_ja-JP/login-kics.fcc?TYPE=33554433&REALMOID=06-0007e4b9-ceba-18d0-b029-0e0e0a06b0a4&GUID=&SMAUTHREASON=0&METHOD=GET&SMAGENTNAME=-SM-HRqQr6ufcyxhIF0WsEzBihlJmLjJf14Q%2fr%2f7bkyx2DuLbqMW%2bF2WWjM%2fvtW%2bhiy1&TARGET=-SM-http%3a%2f%2fkics%2ejinji%2edenso%2eco%2ejp%2fa0tpkkics%2fapl%2fjsp%2fTop%2ejsp'
+                driver.get(kics_url)
 
-            js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "' + timeline.start_hour + '"; \
-                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "' + timeline.start_min + '" ; \
-                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "' + timeline.end_hour + '"; \
-                appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "' + timeline.end_min + '" ; \
-                appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "' + timeline.sum_hour + '"; \
-                appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "' + timeline.sum_min + '" ;'
-            driver.execute_script(js)
+                js = 'document.Login.USER.value=\"' + USER + '\"; \
+                      document.Login.PASSWORD.value=\"' + PASSWORD + '\"; \
+                    submitForm();'
 
-            driver.execute_script('appFrame.ok_onClick();')
-            wait.until(EC.presence_of_all_elements_located)
+                driver.execute_script(js)
+                wait.until(EC.presence_of_all_elements_located)
 
-            time.sleep(3) # 画面の遷移待ち
-            driver.execute_script(
-                'appFrame.doAction("/KinmuTorokuKakuninEntry");')
-            error = (True, '正常に登録できました')
-        except BaseException:
-            error = (False, '異常が発生し登録できませんでした')
+                handle_array = driver.window_handles
+                driver.switch_to.window(handle_array[-1])
 
-        # input() #pause
+                js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "' + sm.timeline.start_hour + '"; \
+                    appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "' + sm.timeline.start_min + '" ; \
+                    appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "' + sm.timeline.end_hour + '"; \
+                    appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "' + sm.timeline.end_min + '" ; \
+                    appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "' + sm.timeline.sum_hour + '"; \
+                    appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "' + sm.timeline.sum_min + '" ;'
+                driver.execute_script(js)
 
-    return error
+                driver.execute_script('appFrame.ok_onClick();')
+                wait.until(EC.presence_of_all_elements_located)
+
+                time.sleep(3)  # 画面の遷移待ち
+
+                driver.execute_script(
+                    'appFrame.doAction("/KinmuTorokuKakuninEntry");')
+
+                # '正常に登録できました'
+                # todo : 正常表示
+            except BaseException:
+                # todo : show error
+                pass
 
 
 def main():
     # for test
-    timelist = []
-    timelist.append(datetime.datetime(2022, 1, 2, 10, 11))
-    timelist.append(datetime.datetime(2022, 1, 2, 12, 47))  # 2:36
-    timelist.append(datetime.datetime(2022, 1, 2, 13, 30))
-    timelist.append(datetime.datetime(2022, 1, 2, 15, 32))  # 2:02
-    timelist.append(datetime.datetime(2022, 1, 2, 16, 58))
-    timelist.append(datetime.datetime(2022, 1, 2, 19, 19))  # 2:21
-
-    KICS_acess(timelist)
+    #timelist = []
+    #timelist.append(datetime.datetime(2022, 1, 2, 10, 11))
+    #timelist.append(datetime.datetime(2022, 1, 2, 12, 47))  # 2:36
+    #timelist.append(datetime.datetime(2022, 1, 2, 13, 30))
+    #timelist.append(datetime.datetime(2022, 1, 2, 15, 32))  # 2:02
+    #timelist.append(datetime.datetime(2022, 1, 2, 16, 58))
+    #timelist.append(datetime.datetime(2022, 1, 2, 19, 19))  # 2:21
+#
+    #KICS_acess(timelist)
+    pass
 
 
 if __name__ == "__main__":
