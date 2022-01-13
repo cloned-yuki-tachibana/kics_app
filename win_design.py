@@ -53,7 +53,7 @@ class KicsAppButton(tk.Button):
             takefocus=False)
 
     def register2sm(self, sm: SM.StateMachine):
-        sm.add_common_act(self.act_update_state)
+        sm.add_common_action_item(self.act_update_state)
 
     def act_update_state(
             self,
@@ -131,7 +131,7 @@ class KicsAppTimeStampLogBox(LogBox):
         self.register2sm(sm)
 
     def register2sm(self, sm: SM.StateMachine):
-        sm.add_common_act(self.act_stamp)
+        sm.add_common_action_item(self.act_stamp)
 
     def act_stamp(self, sm: SM.StateMachine, event_id, *args, **kwargs):
         MSG_TABLE = ("勤務開始", "勤務終了", "休憩開始", "休憩終了")
@@ -163,25 +163,26 @@ class KicsAppTimeInfoFrame(tk.Frame):
         self.register2sm(sm)
 
     def sum_update(self, timelist: tl.KicsAppTimeline):
-        try:
-            sum_time = timelist.get_sum_time()
-            self.l_work_sum_text.set(
-                "勤務時間合計 " +
-                sum_time.hour +
-                "時間" +
-                sum_time.minute +
-                "分")
-        except BaseException:
-            pass
-        finally:
-            # update every minute
-            self.after_id = self.after(60000, self.sum_update)
+        sum_time = timelist.get_kinmu_sum()
+        self.l_work_sum_text.set(
+            "勤務時間合計 " +
+            sum_time.hour +
+            "時間" +
+            sum_time.minute +
+            "分")
+        # update every minute
+        self.after_id = self.after(60000, self.sum_update, timelist)
 
     def register2sm(self, sm: SM.StateMachine):
-        sm.add_common_act(self.act_state_update)
+        sm.add_common_action_item(self.act_state_update)
 
-        sm.add_act(type(sm).ACTION_VAR.KINMU_START, 1, self.act_start_update)
-        sm.add_act(type(sm).ACTION_VAR.KINMU_END, 1, self.act_time_reset)
+        sm.add_action_item(
+            type(sm).ACTION_VAR.KINMU_START,
+            self.act_start_update)
+        sm.add_action_item(
+            type(sm).ACTION_VAR.KINMU_END,
+            self.act_time_reset,
+            priority='-2')
 
     def act_state_update(
             self,
@@ -269,20 +270,24 @@ class KicsAppFrame(tk.Frame):
         self.statebox.pack_configure(in_=self)
         self.f_form_id.pack_configure(in_=self)
         self.f_form_pass.pack_configure(in_=self)
-        self.f_button_kinmu.pack_configure(in_=self, pady=2)
+        self.f_button_kinmu.pack_configure(in_=self, pady=(10, 0))
         self.f_button_kyukei.pack_configure(in_=self, pady=2)
         self.logbox.pack_configure(in_=self)
 
 
 class KicsAppWindow(tk.Tk):
-    #def __init__(self):
-    #    #super().__init__()
-    #    self.geometry('200x260')
-    #    self.title('KICS AUTO')
-    #    self.resizable(False, False)
+    def __init__(self):
+        super().__init__()
+
+        self.title('KICS AUTO')
+        self.resizable(False, False)
 
     def register(self, widget):
         widget.pack_configure(in_=self)
+
+    def resize(self, width=200, height=400):
+        format = str(width) + 'x' + str(height)
+        self.geometry(format)
 
 
 def main():

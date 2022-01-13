@@ -45,7 +45,7 @@ class KicsAppTimeline(list):
         self.register2sm(sm)
 
     def get_kics_time(self):
-        def round_kinmu_min(self):
+        def round_kinmu_min(self: KicsAppTimeline):
             if int(self.sum_min) >= 45:
                 self.sum_min = "45"
             elif int(self.sum_min) >= 30:
@@ -54,6 +54,8 @@ class KicsAppTimeline(list):
                 self.sum_min = "15"
             else:
                 self.sum_min = "00"
+
+        self.calc_start_time()
         self.calc_end_time()
         self.calc_kinmu_sum()
         round_kinmu_min(self)
@@ -63,14 +65,11 @@ class KicsAppTimeline(list):
         self.start_min = self[0].minute
 
     def calc_end_time(self):
-        print("len=" + str(len(self)))
-        for elem in self:
-            print(vars(elem))
         self.end_hour = self[-1].hour
         self.end_min = self[-1].minute
 
     def get_kinmu_sum(self):
-        self.calc_kinmu_sum
+        self.calc_kinmu_sum()
         return_obj = empty()
         setattr(return_obj, 'hour', self.sum_hour)
         setattr(return_obj, 'minute', self.sum_min)
@@ -83,19 +82,22 @@ class KicsAppTimeline(list):
                 work_time_sum += (int(self[i + 1].hour) - int(self[i].hour)) * 60 + (
                     int(self[i + 1].minute) - int(self[i].minute))
 
-                self.sum_hour = str(work_time_sum // 60).zfill(2)
-                self.sum_min = str(work_time_sum % 60).zfill(2)
+            self.sum_hour = str(work_time_sum // 60).zfill(2)
+            self.sum_min = str(work_time_sum % 60).zfill(2)
 
         if len(self) % 2 == 0:  # 休憩中 or 勤務終了
             kinmu_time(self)
         else:  # 勤務中
-            self.append(dt.datetime.now())
+            self.append(nichiji.now())
             kinmu_time(self)
             self.pop()
 
     def register2sm(self, sm: SM.StateMachine):
-        sm.add_common_act(self.act_push)
-        sm.add_act(type(sm).ACTION_VAR.KINMU_END, 5, self.act_clear)
+        sm.add_common_action_item(self.act_push)
+        sm.add_action_item(
+            type(sm).ACTION_VAR.KINMU_END,
+            self.act_clear,
+            priority='-2')
 
     def act_push(self, *args, **kwargs):
         self.append(nichiji.now())

@@ -7,7 +7,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.alert import Alert
 import time
 
-import timeline as tl
 import StateMachine as SM
 
 
@@ -16,7 +15,10 @@ class KicsRegister():
         self.register2sm(sm)
 
     def register2sm(self, sm: SM.StateMachine):
-        sm.add_act(type(sm).ACTION_VAR.KINMU_END, 2, self.act_kics_register)
+        sm.add_action_item(
+            type(sm).ACTION_VAR.KINMU_END,
+            self.act_kics_register,
+            priority='+2')
 
     def act_kics_register(self, sm, *args, **kwargs):
 
@@ -27,10 +29,8 @@ class KicsRegister():
 
         if USER == '' or PASSWORD == '':
             # 'idかpassが入力されていません'
-            print ('a')
+            print('a')
             return  # todo : show error
-
-        return
 
         options = EdgeOptions()
         options.use_chromium = True
@@ -79,13 +79,13 @@ def main():
     # for test
     #timelist = []
     #timelist.append(datetime.datetime(2022, 1, 2, 10, 11))
-    #timelist.append(datetime.datetime(2022, 1, 2, 12, 47))  # 2:36
+    # timelist.append(datetime.datetime(2022, 1, 2, 12, 47))  # 2:36
     #timelist.append(datetime.datetime(2022, 1, 2, 13, 30))
-    #timelist.append(datetime.datetime(2022, 1, 2, 15, 32))  # 2:02
+    # timelist.append(datetime.datetime(2022, 1, 2, 15, 32))  # 2:02
     #timelist.append(datetime.datetime(2022, 1, 2, 16, 58))
-    #timelist.append(datetime.datetime(2022, 1, 2, 19, 19))  # 2:21
-#
-    #KICS_acess(timelist)
+    # timelist.append(datetime.datetime(2022, 1, 2, 19, 19))  # 2:21
+    #
+    # KICS_acess(timelist)
     pass
 
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import subprocess
+
 import StateMachine as SM
 
 
@@ -13,13 +14,21 @@ class VPNConnector():
         subprocess.run(['vpn_toggle.bat', action])
 
     def register2sm(self, sm: SM.StateMachine):
-        sm.add_act(type(sm).ACTION_VAR.KINMU_START, 5, self.act_vpn_connect)
-        sm.add_act(type(sm).ACTION_VAR.KINMU_END, 5, self.act_vpn_disconnect)
-        sm.add_act(
+        sm.add_action_item(
+            type(sm).ACTION_VAR.KINMU_START,
+            self.act_vpn_connect,
+            priority='+2')
+        sm.add_action_item(
+            type(sm).ACTION_VAR.KINMU_END,
+            self.act_vpn_disconnect,
+            priority='-2')
+        sm.add_action_item(
             type(sm).ACTION_VAR.KYUKEI_START,
-            5,
-            self.act_vpn_disconnect)
-        sm.add_act(type(sm).ACTION_VAR.KYUKEI_END, 5, self.act_vpn_connect)
+            self.act_vpn_disconnect, priority='-2')
+        sm.add_action_item(
+            type(sm).ACTION_VAR.KYUKEI_END,
+            self.act_vpn_connect,
+            priority='+2')
 
     def act_vpn_connect(self, *args, **kwargs):
         print('connect')
