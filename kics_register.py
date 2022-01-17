@@ -8,6 +8,7 @@ from selenium.webdriver.common.alert import Alert
 import time
 
 import StateMachine as SM
+import credential as cd
 
 
 class KicsRegister():
@@ -22,15 +23,9 @@ class KicsRegister():
 
     def act_kics_register(self, sm, *args, **kwargs):
 
+        # timelineはシングルトンにしてここで取得すべき？
+
         sm.timeline.get_kics_time()
-
-        USER = sm.frame.f_form_id.get()
-        PASSWORD = sm.frame.f_form_pass.get()
-
-        if USER == '' or PASSWORD == '':
-            # 'idかpassが入力されていません'
-            print('a')
-            return  # todo : show error
 
         options = EdgeOptions()
         options.use_chromium = True
@@ -38,12 +33,14 @@ class KicsRegister():
         options.add_argument("--headless")
         with Edge(executable_path='C:\\WebDriver\\bin\\msedgedriver.exe') as driver:
             try:
+                account = cd.CredentialController()
+
                 wait = WebDriverWait(driver=driver, timeout=30)
                 kics_url = 'http://kics.jinji.denso.co.jp/siteminderagent/forms_ja-JP/login-kics.fcc?TYPE=33554433&REALMOID=06-0007e4b9-ceba-18d0-b029-0e0e0a06b0a4&GUID=&SMAUTHREASON=0&METHOD=GET&SMAGENTNAME=-SM-HRqQr6ufcyxhIF0WsEzBihlJmLjJf14Q%2fr%2f7bkyx2DuLbqMW%2bF2WWjM%2fvtW%2bhiy1&TARGET=-SM-http%3a%2f%2fkics%2ejinji%2edenso%2eco%2ejp%2fa0tpkkics%2fapl%2fjsp%2fTop%2ejsp'
                 driver.get(kics_url)
 
-                js = 'document.Login.USER.value=\"' + USER + '\"; \
-                      document.Login.PASSWORD.value=\"' + PASSWORD + '\"; \
+                js = 'document.Login.USER.value=\"' + account.user + '\"; \
+                      document.Login.PASSWORD.value=\"' + account.get_password() + '\"; \
                     submitForm();'
 
                 driver.execute_script(js)
@@ -86,6 +83,7 @@ def main():
     # timelist.append(datetime.datetime(2022, 1, 2, 19, 19))  # 2:21
     #
     # KICS_acess(timelist)
+
     pass
 
 

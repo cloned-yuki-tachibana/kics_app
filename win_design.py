@@ -3,9 +3,20 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import functools
+from turtle import width
 
 import timeline as tl
 import StateMachine as SM
+
+
+class KicsAppMenuBar(tk.Menu):
+    def __init__(self):
+        super().__init__()
+
+        menu_ele1 = tk.Menu()
+        menu_ele2 = tk.Menu()
+        self.add_cascade(label="要素1", menu=menu_ele1)
+        self.add_cascade(label="要素2", menu=menu_ele2)
 
 
 class KicsAppButton(tk.Button):
@@ -104,6 +115,28 @@ class InputFrame(tk.Frame):
     def insert(self, text):
         self.entry.delete(0, tk.END)
         self.entry.insert(0, text)
+
+
+class AccountFormFrame(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        id_label_args = {'text': "DSC-ID"}
+        self.f_form_id = InputFrame(label_dict=id_label_args, entry_dict={})
+
+        pass_label_args = {'text': "Password"}
+        self.f_form_pass = InputFrame(
+            label_dict=pass_label_args,
+            entry_dict={'show': "*"})
+
+        self.f_form_id.pack_configure(in_=self, padx=10)
+        self.f_form_pass.pack_configure(in_=self, padx=10, pady=(0, 10))
+
+    def get_id(self):
+        return self.f_form_id.get()
+
+    def get_pass(self):
+        return self.f_form_pass.get()
 
 
 class LogBox(scrolledtext.ScrolledText):
@@ -221,14 +254,6 @@ class KicsAppFrame(tk.Frame):
     def __init__(self, sm: SM.StateMachine):
         super().__init__()
 
-        id_label_args = {'text': "DSC-ID"}
-        self.f_form_id = InputFrame(label_dict=id_label_args, entry_dict={})
-
-        pass_label_args = {'text': "Password"}
-        self.f_form_pass = InputFrame(
-            label_dict=pass_label_args,
-            entry_dict={'show': "*"})
-
         KINMU_START_ARGS = {
             'text': "勤務開始",
             'event_id': type(sm).EVENT_VAR.KINMU_START_BUTTON_PUSHED,
@@ -268,8 +293,7 @@ class KicsAppFrame(tk.Frame):
 
         # 配置
         self.statebox.pack_configure(in_=self)
-        self.f_form_id.pack_configure(in_=self)
-        self.f_form_pass.pack_configure(in_=self)
+
         self.f_button_kinmu.pack_configure(in_=self, pady=(10, 0))
         self.f_button_kyukei.pack_configure(in_=self, pady=2)
         self.logbox.pack_configure(in_=self)
@@ -288,6 +312,35 @@ class KicsAppWindow(tk.Tk):
     def resize(self, width=200, height=400):
         format = str(width) + 'x' + str(height)
         self.geometry(format)
+
+
+class CredentialWindow(tk.Tk):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.geometry('200x200')
+        self.title('plz input')
+        self.resizable(False, False)
+
+        self.label1 = tk.Label(text="初回登録", font=('bold'))
+        self.label2 = tk.Label(text="DSC-IDを入力してください")
+        self.account = AccountFormFrame(bd=3, relief=tk.RAISED, width=150)
+        self.ok_button = tk.Button(
+            text='登録', width=20, command=self.submit, bg='palegreen')
+
+        self.label1.pack_configure(in_=self)
+        self.label2.pack_configure(in_=self)
+        self.account.pack_configure(in_=self)
+        self.ok_button.pack_configure(in_=self, pady=10)
+
+        self.bind("<Return>", self.submit)
+
+        self.mainloop()
+
+    def submit(self, *args, **kwargs):
+        self.user = self.account.get_id()
+        self.password = self.account.get_pass()
+        self.destroy()
+
 
 
 def main():
