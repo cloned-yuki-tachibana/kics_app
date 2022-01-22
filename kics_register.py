@@ -31,8 +31,9 @@ class KicsRegister():
         options.use_chromium = True
 
         options.add_argument("--headless")
-        with Edge(executable_path='C:\\WebDriver\\bin\\msedgedriver.exe') as driver:
+        with Edge(executable_path='C:\\WebDriver\\bin\\msedgedriver.exe', options=options) as driver:
             try:
+                # call singleton
                 account = cd.CredentialController()
 
                 wait = WebDriverWait(driver=driver, timeout=30)
@@ -49,12 +50,12 @@ class KicsRegister():
                 handle_array = driver.window_handles
                 driver.switch_to.window(handle_array[-1])
 
-                js = ' appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "' + sm.timeline.start_hour + '"; \
-                    appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "' + sm.timeline.start_min + '" ; \
-                    appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "' + sm.timeline.end_hour + '"; \
-                    appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "' + sm.timeline.end_min + '" ; \
-                    appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "' + sm.timeline.sum_hour + '"; \
-                    appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "' + sm.timeline.sum_min + '" ;'
+                js =   'appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartHour.value = "' + sm.timeline.start_hour + '"; \
+                        appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuStartMin.value  = "' + sm.timeline.start_min + '" ; \
+                        appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndHour.value   = "' + sm.timeline.end_hour + '"; \
+                        appFrame.document.KinmuTorokuActionForm.workZaitakuKinmuEndMin.value    = "' + sm.timeline.end_min + '" ; \
+                        appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuHour.value      = "' + sm.timeline.sum_hour + '"; \
+                        appFrame.document.KinmuTorokuActionForm.gyouZaitakuKinmuMin.value       = "' + sm.timeline.sum_min + '" ;'
                 driver.execute_script(js)
 
                 driver.execute_script('appFrame.ok_onClick();')

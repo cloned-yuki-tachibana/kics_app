@@ -1,9 +1,9 @@
 #!/bin/env python
 
+from pickle import FALSE
 import tkinter as tk
 from tkinter import scrolledtext
 import functools
-from turtle import width
 
 import timeline as tl
 import StateMachine as SM
@@ -13,10 +13,32 @@ class KicsAppMenuBar(tk.Menu):
     def __init__(self):
         super().__init__()
 
-        menu_ele1 = tk.Menu()
-        menu_ele2 = tk.Menu()
-        self.add_cascade(label="要素1", menu=menu_ele1)
-        self.add_cascade(label="要素2", menu=menu_ele2)
+        menu_ele1 = tk.Menu(self, tearoff=False)
+        self.add_cascade(label="ファイル", menu=menu_ele1)
+        menu_ele1.add_command(label="認証情報を更新", command=self.zaitaku)
+        menu_ele1.add_command(label="認証情報を削除", command=self.zaitaku)
+
+
+        menu_ele2 = tk.Menu(self, tearoff=False)
+        self.add_cascade(label="機能", menu=menu_ele2)
+        menu_ele2.add_command(label="在宅勤務申請", command=self.zaitaku)
+        menu_ele2.add_command(label="休務申請(yet)")
+
+        menu_ele3 = tk.Menu(self, tearoff=False)
+        self.add_cascade(label="ヘルプ", menu=menu_ele3)
+        menu_ele3.add_command(label="ヘルプ（yet）", command=self.zaitaku)
+        menu_ele3.add_command(label="エラー報告(yet)", command=self.zaitaku)
+
+    def zaitaku(self):
+        print("zaitaku")
+
+class KicsAppZaitakuShusshaCBox(tk.Frame):
+    def __init___(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cb = tk.Checkbutton(text="出社")
+
+        self.cb.pack_configure(in_=self)
 
 
 class KicsAppButton(tk.Button):
@@ -342,8 +364,7 @@ class CredentialWindow(tk.Tk):
         self.destroy()
 
 
-
-def main():
+def test1():
     class test_class():
         def __init__(self):
             self.name = "test"
@@ -361,6 +382,22 @@ def main():
     test = test_Factory(test_class)
     print(test.name)
 
+def test2():
+    window = tk.Tk()
+    menu = KicsAppMenuBar()
+    window.configure(menu=menu)
+
+    window.mainloop()
+
+def test3():
+    window = tk.Tk()
+    window.geometry('200x200')
+
+    cb = tk.Checkbutton(window, text="test")
+
+    cb.pack()
+
+    window.mainloop()
 
 if __name__ == '__main__':
-    main()
+    test3()

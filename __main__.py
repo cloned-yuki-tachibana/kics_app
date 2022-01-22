@@ -9,12 +9,14 @@ import kics_register
 import vpn_control
 
 
-
 def main():
     cd.CredentialController()
 
     kics_app_sm = StateMachine.SM_KICS()
-    root_window = win_design.KicsAppWindow()
+    main_window = win_design.KicsAppWindow()
+
+    menu = win_design.KicsAppMenuBar()
+    main_window.configure(menu=menu)
 
     timeline = tl.KicsAppTimeline(kics_app_sm)
     setattr(kics_app_sm, 'timeline', timeline)
@@ -25,8 +27,8 @@ def main():
     kics = kics_register.KicsRegister(kics_app_sm)
     vpn = vpn_control.VPNConnector(kics_app_sm)
 
-    root_window.register(frame)
-    root_window.mainloop()
+    main_window.register(frame)
+    main_window.mainloop()
 
 
 def show_registered_action(sm):
